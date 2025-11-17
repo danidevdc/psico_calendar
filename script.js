@@ -1,8 +1,7 @@
 // ========================================
 // CONFIGURACIÓN - REEMPLAZAR CON TU URL
 // ========================================
-const APPS_SCRIPT_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI';
-// Ejemplo: https://script.google.com/macros/s/AKfycby.../exec
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5-r-3ZLOwGDxI4QhQJ2TZ8bsfRuVpunG2_yZzmK3PCnBdztXrI70650vQP1cjmg2gNA/exec';
 
 // ========================================
 // VARIABLES GLOBALES
