@@ -306,15 +306,36 @@ function obtenerNombreDia(fecha) {
 // FORMATEAR HORA
 // ========================================
 function formatearHora(hora) {
+    // Validar que la hora existe y tiene formato correcto
+    if (!hora || typeof hora !== 'string' || !hora.includes(':')) {
+        console.error('Hora inválida:', hora);
+        return hora; // Devolver tal cual si hay error
+    }
+
     const [h, m] = hora.split(':');
     const horaNum = parseInt(h, 10);
+    const minNum = parseInt(m, 10);
+
+    // Validar que los valores sean números válidos
+    if (isNaN(horaNum) || isNaN(minNum)) {
+        console.error('Formato de hora inválido:', hora);
+        return hora;
+    }
+
+    // Formatear minutos con dos dígitos
+    const minutos = minNum.toString().padStart(2, '0');
 
     if (horaNum < 12) {
-        return `${hora} AM`;
+        // AM (incluye 00:00 hasta 11:59)
+        const horaFormateada = horaNum === 0 ? 12 : horaNum;
+        return `${horaFormateada.toString().padStart(2, '0')}:${minutos} AM`;
     } else if (horaNum === 12) {
-        return `${hora} PM`;
+        // 12 PM
+        return `12:${minutos} PM`;
     } else {
-        return `${horaNum - 12}:${m} PM`;
+        // PM (13:00 en adelante)
+        const horaPM = horaNum - 12;
+        return `${horaPM.toString().padStart(2, '0')}:${minutos} PM`;
     }
 }
 
