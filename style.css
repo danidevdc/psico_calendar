@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
 }
 
@@ -72,39 +72,71 @@ section h2 {
     font-style: italic;
 }
 
-.horarios-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-.horarios-table th,
-.horarios-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.horarios-table th {
-    background: #667eea;
-    color: white;
-    font-weight: 600;
-}
-
-.horarios-table tr:hover {
-    background: #f5f5f5;
-}
-
-.horarios-table td:first-child {
-    font-weight: 600;
-    color: #667eea;
-}
-
 .no-horarios {
     text-align: center;
     padding: 30px;
     color: #666;
     font-size: 1.1em;
+    background: #f0f7ff;
+    border-radius: 8px;
+    border: 2px dashed #667eea;
+}
+
+/* Calendario Grid */
+.calendario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.calendario-dia {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.calendario-dia:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.calendario-fecha {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+.dia-nombre {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.fecha-completa {
+    font-size: 0.95em;
+    opacity: 0.9;
+}
+
+.calendario-horas {
+    padding: 15px;
+}
+
+.hora-ocupada {
+    background: white;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    border-left: 4px solid #e74c3c;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.hora-ocupada:last-child {
+    margin-bottom: 0;
 }
 
 /* Formulario */
@@ -248,13 +280,8 @@ footer {
         grid-template-columns: 1fr;
     }
 
-    .horarios-table {
-        font-size: 0.9em;
-    }
-
-    .horarios-table th,
-    .horarios-table td {
-        padding: 8px;
+    .calendario-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -271,7 +298,11 @@ footer {
         font-size: 1.3em;
     }
 
-    .horarios-table {
-        font-size: 0.8em;
+    .calendario-fecha {
+        padding: 12px;
+    }
+
+    .dia-nombre {
+        font-size: 1.1em;
     }
 }

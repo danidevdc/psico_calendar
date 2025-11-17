@@ -118,10 +118,9 @@ function obtenerCitas() {
       timestamp: datos[i][0],
       nombre: datos[i][1],
       whatsapp: datos[i][2],
-      servicio: datos[i][3],
-      fecha: datos[i][4],
-      hora: datos[i][5],
-      comentarios: datos[i][6]
+      fecha: datos[i][3],
+      hora: datos[i][4],
+      comentarios: datos[i][5]
     });
   }
 
@@ -139,7 +138,6 @@ function obtenerCitas() {
 function validarDatos(datos) {
   return datos.nombre &&
          datos.whatsapp &&
-         datos.servicio &&
          datos.fecha &&
          datos.hora;
 }
@@ -160,8 +158,8 @@ function horarioOcupado(fecha, hora) {
 
   // Buscar en todas las filas (excepto encabezado)
   for (let i = 1; i < datos.length; i++) {
-    const fechaExistente = datos[i][4];
-    const horaExistente = datos[i][5];
+    const fechaExistente = datos[i][3];
+    const horaExistente = datos[i][4];
 
     if (fechaExistente === fecha && horaExistente === hora) {
       return true; // Horario ocupado
@@ -189,7 +187,6 @@ function guardarCita(datos) {
     timestamp,
     datos.nombre,
     datos.whatsapp,
-    datos.servicio,
     datos.fecha,
     datos.hora,
     datos.comentarios || ''
@@ -213,7 +210,6 @@ function crearHojaCitas(ss) {
     'Timestamp',
     'Nombre',
     'WhatsApp',
-    'Servicio',
     'Fecha',
     'Hora',
     'Comentarios'
@@ -230,11 +226,10 @@ function crearHojaCitas(ss) {
   // Ajustar ancho de columnas
   hoja.setColumnWidth(1, 150); // Timestamp
   hoja.setColumnWidth(2, 200); // Nombre
-  hoja.setColumnWidth(3, 120); // WhatsApp
-  hoja.setColumnWidth(4, 180); // Servicio
-  hoja.setColumnWidth(5, 120); // Fecha
-  hoja.setColumnWidth(6, 80);  // Hora
-  hoja.setColumnWidth(7, 300); // Comentarios
+  hoja.setColumnWidth(3, 100); // WhatsApp
+  hoja.setColumnWidth(4, 120); // Fecha
+  hoja.setColumnWidth(5, 80);  // Hora
+  hoja.setColumnWidth(6, 300); // Comentarios
 
   // Congelar primera fila
   hoja.setFrozenRows(1);
@@ -248,7 +243,7 @@ function crearHojaCitas(ss) {
 // Descomenta y personaliza si quieres enviar confirmaciones por email
 /*
 function enviarEmailConfirmacion(datos) {
-  const asunto = 'Confirmación de Cita - ' + datos.servicio;
+  const asunto = 'Confirmación de Cita';
   const destinatario = 'tu-email@ejemplo.com'; // Tu email
 
   const mensaje = `
@@ -256,7 +251,6 @@ function enviarEmailConfirmacion(datos) {
 
     Nombre: ${datos.nombre}
     WhatsApp: ${datos.whatsapp}
-    Servicio: ${datos.servicio}
     Fecha: ${datos.fecha}
     Hora: ${datos.hora}
     Comentarios: ${datos.comentarios || 'Sin comentarios'}
@@ -276,9 +270,8 @@ function enviarEmailConfirmacion(datos) {
 function pruebaCrearCita() {
   const datosTest = {
     nombre: 'Juan Pérez',
-    whatsapp: '3001234567',
-    servicio: 'Consulta Psicológica',
-    fecha: '2024-12-15',
+    whatsapp: '71234567',
+    fecha: '20/11/2024',
     hora: '10:00',
     comentarios: 'Prueba del sistema'
   };
