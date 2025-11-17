@@ -121,13 +121,28 @@ function obtenerCitas() {
 
   const citas = [];
   for (let i = 1; i < datos.length; i++) {
+    // Convertir hora a formato HH:MM si es un objeto Date
+    let horaFormateada = datos[i][5];
+
+    if (datos[i][5] instanceof Date) {
+      const hora = datos[i][5].getHours();
+      const minutos = datos[i][5].getMinutes();
+      horaFormateada = `${hora.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+    } else if (typeof datos[i][5] === 'string' && datos[i][5].includes('T')) {
+      // Si viene como string ISO, extraer solo la hora
+      const fecha = new Date(datos[i][5]);
+      const hora = fecha.getHours();
+      const minutos = fecha.getMinutes();
+      horaFormateada = `${hora.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+    }
+
     citas.push({
       timestamp: datos[i][0],
       nombre: datos[i][1],
       whatsapp: datos[i][2],
       carrera: datos[i][3],
       fecha: datos[i][4],
-      hora: datos[i][5],
+      hora: horaFormateada,
       comentarios: datos[i][6]
     });
   }

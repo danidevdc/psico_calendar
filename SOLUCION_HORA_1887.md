@@ -1,32 +1,83 @@
 # 🔧 Solución: Hora mostrando "1887:37 PM"
 
-## 🎯 Problema Identificado
+## 🎯 Problema Identificado y SOLUCIONADO
 
-El valor "1887:37 PM" **NO está en el código**, está guardado como **dato** en tu Google Sheets.
+**Problema Real:** La columna "Hora" en Google Sheets estaba guardada como formato **Date/Time** en lugar de **Texto plano**.
 
-El código JavaScript está funcionando correctamente. El problema es que hay una o más filas en tu hoja de cálculo con el valor "1887:37" en la columna "Hora".
+Cuando se guardaba "16:37", Google Sheets lo convertía automáticamente a un objeto Date completo: `1899-12-30T16:37:36.000Z`
 
-## ✅ Solución Paso a Paso
+Al intentar formatear esto, el código mostraba "1887:37 PM" porque no podía parsear correctamente el formato ISO.
+
+## ✅ Solución Aplicada
+
+He actualizado el código en **dos lugares**:
+
+### 1. **Google Apps Script** (Backend)
+Ahora detecta si la hora es un objeto Date y la convierte a formato "HH:MM" antes de enviarla al frontend.
+
+### 2. **script.js** (Frontend)
+Ahora maneja ambos formatos (texto "HH:MM" y formato ISO) para máxima compatibilidad.
+
+## 🚀 Cómo Aplicar la Solución
+
+### Paso 1: Actualizar Google Apps Script
+
+1. Abre tu Google Sheets
+2. Ve a **Extensiones** → **Apps Script**
+3. **Copia TODO el contenido** del archivo `google-apps-script.gs` actualizado
+4. **Pega** en el editor de Apps Script (reemplaza todo el código anterior)
+5. Haz clic en **Guardar** (💾)
+6. Haz clic en **Implementar** → **Administrar implementaciones**
+7. Haz clic en el ícono de lápiz ✏️ junto a tu implementación actual
+8. En "Versión", selecciona **Nueva versión**
+9. Haz clic en **Implementar**
+
+### Paso 2: Actualizar la página web
+
+1. Los cambios en `script.js` ya están en el repositorio
+2. Asegúrate de que GitHub Pages tenga la versión más reciente
+3. Si usas caché, haz **Ctrl+Shift+R** para recargar sin caché
+
+### Paso 3: Verificar que funcione
+
+1. Recarga tu página web (F5)
+2. Abre la consola del navegador (F12)
+3. Verás logs como:
+
+```
+📊 TOTAL DE CITAS RECIBIDAS: 1
+📌 Cita 1: {nombre: "Daniel", fecha: "18/11/2025", hora: "16:37", horaFormateada: "04:37 PM"}
+```
+
+✅ **Ahora "hora" debe mostrar "16:37" (formato HH:MM), NO el formato ISO**
+
+4. En la página, las tarjetas deben mostrar:
+```
+🕐 04:37 PM  ✅ CORRECTO
+```
+
+---
+
+## 🔧 Solución Manual (Opcional)
+
+Si prefieres arreglarlo manualmente en Google Sheets:
 
 ### Paso 1: Abrir tu Google Sheets
 1. Ve a Google Sheets
 2. Abre el archivo donde están las citas (el que conectaste con Apps Script)
 3. Busca la pestaña llamada "Citas"
 
-### Paso 2: Encontrar el dato incorrecto
-En la columna "Hora" (columna F), busca cualquier celda que contenga:
-- `1887:37`
-- `18:87`
-- Cualquier valor extraño que no sea una hora válida
+### Paso 2: Cambiar el formato de la columna "Hora"
 
-### Paso 3: Limpiar los datos
-**Opción A - Eliminar fila específica:**
-- Haz clic derecho en el número de la fila → "Eliminar fila"
+1. Selecciona **toda la columna F** (donde está "Hora")
+2. Haz clic derecho → **Formato de número** → **Texto sin formato**
+3. Esto evitará que Google Sheets convierta las horas a objetos Date
 
-**Opción B - Limpiar todas las citas de prueba:**
-- Selecciona todas las filas desde la fila 2 hasta la última con datos
-- Presiona Delete
-- Esto dejará solo los encabezados (fila 1) y limpiará todos los datos
+### Paso 3: Limpiar datos incorrectos (si existen)
+
+Si ves celdas con valores extraños en la columna "Hora":
+- Elimina esas filas: clic derecho en el número de fila → "Eliminar fila"
+- O si quieres empezar de cero, elimina todas las filas excepto los encabezados
 
 ### Paso 4: Verificar
 1. Guarda los cambios en Google Sheets

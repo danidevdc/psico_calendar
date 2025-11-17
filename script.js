@@ -317,20 +317,42 @@ function obtenerNombreDia(fecha) {
 // FORMATEAR HORA
 // ========================================
 function formatearHora(hora) {
-    // Validar que la hora existe y tiene formato correcto
-    if (!hora || typeof hora !== 'string' || !hora.includes(':')) {
-        console.error('Hora inválida:', hora);
-        return hora; // Devolver tal cual si hay error
+    // Si la hora viene como objeto Date o string ISO, convertir primero
+    let horaStr = hora;
+
+    if (!hora) {
+        console.error('Hora inválida: valor vacío');
+        return hora;
     }
 
-    const [h, m] = hora.split(':');
+    // Si viene en formato ISO (1899-12-30T16:37:36.000Z), extraer solo HH:MM
+    if (typeof hora === 'string' && hora.includes('T')) {
+        try {
+            const fecha = new Date(hora);
+            const h = fecha.getUTCHours();
+            const m = fecha.getUTCMinutes();
+            horaStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            console.log(`🔄 Hora convertida de ISO: ${hora} → ${horaStr}`);
+        } catch (e) {
+            console.error('Error al parsear hora ISO:', hora, e);
+            return hora;
+        }
+    }
+
+    // Validar que tenga formato HH:MM
+    if (typeof horaStr !== 'string' || !horaStr.includes(':')) {
+        console.error('Hora inválida:', hora);
+        return hora;
+    }
+
+    const [h, m] = horaStr.split(':');
     const horaNum = parseInt(h, 10);
     const minNum = parseInt(m, 10);
 
     // Validar que los valores sean números válidos
     if (isNaN(horaNum) || isNaN(minNum)) {
-        console.error('Formato de hora inválido:', hora);
-        return hora;
+        console.error('Formato de hora inválido:', horaStr);
+        return horaStr;
     }
 
     // Formatear minutos con dos dígitos
