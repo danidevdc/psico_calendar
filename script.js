@@ -1,7 +1,7 @@
 // ========================================
 // CONFIGURACIÓN - REEMPLAZAR CON TU URL
 // ========================================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5-r-3ZLOwGDxI4QhQJ2TZ8bsfRuVpunG2_yZzmK3PCnBdztXrI70650vQP1cjmg2gNA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxamQJGN4pb_4apwlMb9uPorezns5g9Qgm4fpBPiRsO9EphxzyMsCuzTPUMUoNxV0gmnw/exec';
 
 // ========================================
 // VARIABLES GLOBALES
