@@ -235,16 +235,8 @@ function mostrarCalendarioHorarios(citas) {
         return;
     }
 
-    // 🐛 DEBUG: Ver datos recibidos desde Google Sheets
-    console.log('📊 TOTAL DE CITAS RECIBIDAS:', citas.length);
-    citas.forEach((cita, index) => {
-        console.log(`📌 Cita ${index + 1}:`, {
-            nombre: cita.nombre,
-            fecha: cita.fecha,
-            hora: cita.hora,
-            horaFormateada: formatearHora(cita.hora)
-        });
-    });
+    // 📊 Solo mostrar estadísticas generales (sin datos personales)
+    console.log('📊 Horarios ocupados cargados:', citas.length);
 
     // Agrupar citas por fecha
     const citasPorFecha = {};

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Sistema de Citas</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- ========================================
+         PANTALLA DE LOGIN
+    ========================================= -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <h1>🔒 Acceso Administrador</h1>
+            <p>Panel de Control - Sistema de Citas Psicología</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Ingresa la contraseña"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <span class="btn-text">Ingresar</span>
+                    <span class="btn-loader" style="display: none;">⏳</span>
+                </button>
+
+                <div id="login-error" class="error-message" style="display: none;"></div>
+            </form>
+
+            <div class="login-footer">
+                <a href="index.html">← Volver a la página de citas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         PANEL DE ADMINISTRACIÓN
+    ========================================= -->
+    <div id="admin-panel" class="admin-container" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-content">
+                <h1>📊 Panel de Administración</h1>
+                <div class="header-actions">
+                    <button id="btn-refresh" class="btn-secondary">🔄 Actualizar</button>
+                    <button id="btn-logout" class="btn-secondary">🚪 Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Estadísticas -->
+        <section class="stats-section">
+            <h2>📈 Estadísticas</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-label">Total de Citas</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-carreras">0</div>
+                        <div class="stat-label">Carreras Atendidas</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📆</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-proxima">-</div>
+                        <div class="stat-label">Próxima Cita</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-hoy">0</div>
+                        <div class="stat-label">Citas Hoy</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filters-section">
+            <h2>🔍 Filtros</h2>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="filter-fecha">Fecha:</label>
+                    <input type="text" id="filter-fecha" placeholder="DD/MM/AAAA">
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-carrera">Carrera:</label>
+                    <select id="filter-carrera">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-nombre">Nombre:</label>
+                    <input type="text" id="filter-nombre" placeholder="Buscar por nombre">
+                </div>
+
+                <div class="filter-group">
+                    <button id="btn-clear-filters" class="btn-secondary">✖ Limpiar Filtros</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla de Citas -->
+        <section class="citas-section">
+            <div class="section-header">
+                <h2>📋 Todas las Citas</h2>
+                <button id="btn-export" class="btn-secondary">📥 Exportar a CSV</button>
+            </div>
+
+            <div id="loading-citas" class="loading" style="display: none;">
+                ⏳ Cargando citas...
+            </div>
+
+            <div id="citas-table-container">
+                <!-- La tabla se genera dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Mensaje de confirmación -->
+        <div id="mensaje-admin" class="mensaje-admin"></div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

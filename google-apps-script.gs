@@ -52,6 +52,12 @@ function doPost(e) {
   try {
     const datos = JSON.parse(e.postData.contents);
 
+    // NUEVA FUNCIONALIDAD: Eliminar cita (para panel de admin)
+    if (datos.action === 'eliminarCita') {
+      return eliminarCita(datos.fecha, datos.hora);
+    }
+
+    // FUNCIONALIDAD EXISTENTE: Crear cita
     if (!validarDatos(datos)) {
       return ContentService
         .createTextOutput(JSON.stringify({
@@ -461,4 +467,63 @@ function pruebaCrearCita() {
   enviarWhatsAppConfirmacion(datosTest);
 
   Logger.log('Cita de prueba creada en fila: ' + fila);
+}
+
+// ========================================
+// ELIMINAR CITA (PANEL DE ADMIN)
+// ========================================
+function eliminarCita(fecha, hora) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const hoja = ss.getSheetByName(NOMBRE_HOJA);
+
+    if (!hoja) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: 'error',
+          mensaje: 'Hoja no encontrada'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const datos = hoja.getDataRange().getValues();
+    let filaEliminar = -1;
+
+    // Buscar la fila que coincida con fecha y hora
+    for (let i = 1; i < datos.length; i++) {
+      if (datos[i][4] === fecha && datos[i][5] === hora) {
+        filaEliminar = i + 1; // +1 porque las filas en Sheets empiezan en 1
+        break;
+      }
+    }
+
+    if (filaEliminar > 0) {
+      hoja.deleteRow(filaEliminar);
+
+      Logger.log('Cita eliminada: Fecha=' + fecha + ', Hora=' + hora);
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: 'exito',
+          mensaje: 'Cita eliminada correctamente'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: 'error',
+          mensaje: 'Cita no encontrada'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+  } catch (error) {
+    Logger.log('Error al eliminar cita: ' + error.toString());
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'error',
+        mensaje: error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
