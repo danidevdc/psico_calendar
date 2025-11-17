@@ -88,20 +88,23 @@
 
                 <!-- Selector de Hora -->
                 <div class="form-group">
-                    <label for="hora">Hora *</label>
+                    <label for="hora">Hora * (Turnos de 45 min)</label>
                     <select id="hora" name="hora" required>
                         <option value="">Seleccione una hora</option>
-                        <option value="08:00">08:00 AM</option>
-                        <option value="09:00">09:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="12:00">12:00 PM</option>
-                        <option value="14:00">02:00 PM</option>
-                        <option value="15:00">03:00 PM</option>
-                        <option value="16:00">04:00 PM</option>
-                        <option value="17:00">05:00 PM</option>
-                        <option value="18:00">06:00 PM</option>
+                        <optgroup label="Turno Mañana">
+                            <option value="10:15">10:15 AM</option>
+                            <option value="11:10">11:10 AM</option>
+                            <option value="12:05">12:05 PM</option>
+                        </optgroup>
+                        <optgroup label="Turno Tarde">
+                            <option value="14:00">02:00 PM</option>
+                            <option value="14:55">02:55 PM</option>
+                            <option value="15:50">03:50 PM</option>
+                            <option value="16:45">04:45 PM</option>
+                            <option value="17:40">05:40 PM</option>
+                        </optgroup>
                     </select>
+                    <small>Cada turno dura 45 minutos</small>
                 </div>
 
                 <div class="form-group">

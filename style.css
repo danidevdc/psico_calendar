@@ -229,6 +229,22 @@ section h2 {
     border-color: #f0f0f0;
 }
 
+.fin-de-semana {
+    background: #ffe6e6 !important;
+    color: #999 !important;
+    border-color: #ffcccc !important;
+    position: relative;
+}
+
+.fin-de-semana::after {
+    content: '🚫';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.7em;
+    opacity: 0.5;
+}
+
 .dia-hoy {
     background: #fff3cd;
     border-color: #ffc107;

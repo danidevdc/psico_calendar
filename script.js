@@ -92,6 +92,10 @@ function renderizarCalendario() {
         diasGrid.appendChild(diaVacio);
     }
 
+    // Fecha límite: 12 de diciembre de 2024
+    const fechaLimite = new Date(2024, 11, 12); // Mes 11 = diciembre (0-indexed)
+    fechaLimite.setHours(23, 59, 59, 999);
+
     // Agregar días del mes
     for (let dia = 1; dia <= diasEnMes; dia++) {
         const diaElemento = document.createElement('div');
@@ -101,11 +105,23 @@ function renderizarCalendario() {
         const fechaDia = new Date(anioActual, mesActual, dia);
         fechaDia.setHours(0, 0, 0, 0);
 
-        // Marcar día pasado
-        if (fechaDia < hoy) {
+        const diaSemana = fechaDia.getDay(); // 0 = Domingo, 6 = Sábado
+
+        // Deshabilitar día si:
+        // 1. Es día pasado
+        // 2. Es sábado (6) o domingo (0)
+        // 3. Es después del 12 de diciembre 2024
+        const esPasado = fechaDia < hoy;
+        const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
+        const despuesDeLimite = fechaDia > fechaLimite;
+
+        if (esPasado || esFinDeSemana || despuesDeLimite) {
             diaElemento.classList.add('dia-pasado');
+            if (esFinDeSemana) {
+                diaElemento.classList.add('fin-de-semana');
+            }
         } else {
-            // Hacer clic solo si no es pasado
+            // Hacer clic solo si es día hábil disponible
             diaElemento.addEventListener('click', () => seleccionarFecha(dia));
 
             // Marcar día seleccionado
@@ -131,6 +147,22 @@ function renderizarCalendario() {
 // ========================================
 function seleccionarFecha(dia) {
     fechaSeleccionada = new Date(anioActual, mesActual, dia);
+
+    // Validar que no sea fin de semana
+    const diaSemana = fechaSeleccionada.getDay();
+    if (diaSemana === 0 || diaSemana === 6) {
+        mostrarMensaje('No se pueden reservar citas en fines de semana (sábados y domingos)', 'error');
+        fechaSeleccionada = null;
+        return;
+    }
+
+    // Validar que no sea después del 12 de diciembre 2024
+    const fechaLimite = new Date(2024, 11, 12, 23, 59, 59);
+    if (fechaSeleccionada > fechaLimite) {
+        mostrarMensaje('No se pueden reservar citas después del 12 de diciembre de 2024', 'error');
+        fechaSeleccionada = null;
+        return;
+    }
 
     // Formatear fecha DD/MM/AAAA
     const diaStr = String(dia).padStart(2, '0');
