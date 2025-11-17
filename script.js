@@ -92,8 +92,8 @@ function renderizarCalendario() {
         diasGrid.appendChild(diaVacio);
     }
 
-    // Fecha límite: 12 de diciembre de 2024
-    const fechaLimite = new Date(2024, 11, 12); // Mes 11 = diciembre (0-indexed)
+    // Fecha límite: 12 de diciembre de 2025
+    const fechaLimite = new Date(2025, 11, 12); // Mes 11 = diciembre (0-indexed)
     fechaLimite.setHours(23, 59, 59, 999);
 
     // Agregar días del mes
@@ -156,10 +156,10 @@ function seleccionarFecha(dia) {
         return;
     }
 
-    // Validar que no sea después del 12 de diciembre 2024
-    const fechaLimite = new Date(2024, 11, 12, 23, 59, 59);
+    // Validar que no sea después del 12 de diciembre 2025
+    const fechaLimite = new Date(2025, 11, 12, 23, 59, 59);
     if (fechaSeleccionada > fechaLimite) {
-        mostrarMensaje('No se pueden reservar citas después del 12 de diciembre de 2024', 'error');
+        mostrarMensaje('No se pueden reservar citas después del 12 de diciembre de 2025', 'error');
         fechaSeleccionada = null;
         return;
     }
