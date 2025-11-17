@@ -7,6 +7,9 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5-r-3ZLOwGDxI
 // VARIABLES GLOBALES
 // ========================================
 let horariosOcupados = [];
+let mesActual = new Date().getMonth();
+let anioActual = new Date().getFullYear();
+let fechaSeleccionada = null;
 
 // ========================================
 // INICIALIZACIÓN
@@ -14,6 +17,7 @@ let horariosOcupados = [];
 document.addEventListener('DOMContentLoaded', function() {
     cargarHorariosOcupados();
     configurarEventos();
+    renderizarCalendario();
 });
 
 // ========================================
@@ -21,18 +25,13 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========================================
 function configurarEventos() {
     const form = document.getElementById('form-cita');
-    const fechaInput = document.getElementById('fecha');
     const horaSelect = document.getElementById('hora');
     const whatsappInput = document.getElementById('whatsapp');
+    const btnMesAnterior = document.getElementById('btn-mes-anterior');
+    const btnMesSiguiente = document.getElementById('btn-mes-siguiente');
 
     // Evento de envío del formulario
     form.addEventListener('submit', manejarEnvioFormulario);
-
-    // Formatear fecha automáticamente
-    fechaInput.addEventListener('input', formatearFecha);
-
-    // Validar fecha al cambiar
-    fechaInput.addEventListener('blur', validarFecha);
 
     // Validar hora al cambiar
     horaSelect.addEventListener('change', validarHora);
@@ -41,22 +40,124 @@ function configurarEventos() {
     whatsappInput.addEventListener('input', function(e) {
         e.target.value = e.target.value.replace(/[^0-9]/g, '').substring(0, 8);
     });
+
+    // Navegación del calendario
+    btnMesAnterior.addEventListener('click', () => {
+        mesActual--;
+        if (mesActual < 0) {
+            mesActual = 11;
+            anioActual--;
+        }
+        renderizarCalendario();
+    });
+
+    btnMesSiguiente.addEventListener('click', () => {
+        mesActual++;
+        if (mesActual > 11) {
+            mesActual = 0;
+            anioActual++;
+        }
+        renderizarCalendario();
+    });
 }
 
 // ========================================
-// FORMATEAR FECHA DD/MM/AAAA
+// RENDERIZAR CALENDARIO
 // ========================================
-function formatearFecha(e) {
-    let valor = e.target.value.replace(/[^0-9]/g, '');
+function renderizarCalendario() {
+    const meses = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
 
-    if (valor.length >= 2) {
-        valor = valor.substring(0, 2) + '/' + valor.substring(2);
-    }
-    if (valor.length >= 5) {
-        valor = valor.substring(0, 5) + '/' + valor.substring(5);
+    // Actualizar título
+    document.getElementById('mes-anio-actual').textContent = `${meses[mesActual]} ${anioActual}`;
+
+    // Obtener primer día del mes y total de días
+    const primerDia = new Date(anioActual, mesActual, 1).getDay();
+    const diasEnMes = new Date(anioActual, mesActual + 1, 0).getDate();
+
+    // Limpiar días anteriores
+    const diasGrid = document.getElementById('calendario-dias');
+    diasGrid.innerHTML = '';
+
+    // Fecha de hoy
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    // Agregar espacios vacíos
+    for (let i = 0; i < primerDia; i++) {
+        const diaVacio = document.createElement('div');
+        diaVacio.className = 'calendario-dia-vacio';
+        diasGrid.appendChild(diaVacio);
     }
 
-    e.target.value = valor.substring(0, 10);
+    // Agregar días del mes
+    for (let dia = 1; dia <= diasEnMes; dia++) {
+        const diaElemento = document.createElement('div');
+        diaElemento.className = 'calendario-dia-item';
+        diaElemento.textContent = dia;
+
+        const fechaDia = new Date(anioActual, mesActual, dia);
+        fechaDia.setHours(0, 0, 0, 0);
+
+        // Marcar día pasado
+        if (fechaDia < hoy) {
+            diaElemento.classList.add('dia-pasado');
+        } else {
+            // Hacer clic solo si no es pasado
+            diaElemento.addEventListener('click', () => seleccionarFecha(dia));
+
+            // Marcar día seleccionado
+            if (fechaSeleccionada &&
+                fechaSeleccionada.getDate() === dia &&
+                fechaSeleccionada.getMonth() === mesActual &&
+                fechaSeleccionada.getFullYear() === anioActual) {
+                diaElemento.classList.add('dia-seleccionado');
+            }
+        }
+
+        // Marcar día de hoy
+        if (fechaDia.getTime() === hoy.getTime()) {
+            diaElemento.classList.add('dia-hoy');
+        }
+
+        diasGrid.appendChild(diaElemento);
+    }
+}
+
+// ========================================
+// SELECCIONAR FECHA
+// ========================================
+function seleccionarFecha(dia) {
+    fechaSeleccionada = new Date(anioActual, mesActual, dia);
+
+    // Formatear fecha DD/MM/AAAA
+    const diaStr = String(dia).padStart(2, '0');
+    const mesStr = String(mesActual + 1).padStart(2, '0');
+    const fechaFormateada = `${diaStr}/${mesStr}/${anioActual}`;
+
+    // Actualizar campo oculto
+    document.getElementById('fecha').value = fechaFormateada;
+
+    // Mostrar fecha seleccionada
+    const meses = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+    const nombreDia = dias[fechaSeleccionada.getDay()];
+    const nombreMes = meses[mesActual];
+
+    document.getElementById('fecha-seleccionada').innerHTML =
+        `<strong>Fecha seleccionada:</strong> ${nombreDia}, ${dia} de ${nombreMes} de ${anioActual}`;
+
+    // Re-renderizar calendario para mostrar selección
+    renderizarCalendario();
+
+    // Validar hora si ya está seleccionada
+    validarHora();
 }
 
 // ========================================
@@ -155,7 +256,7 @@ function parsearFecha(fechaStr) {
     if (partes.length !== 3) return null;
 
     const dia = parseInt(partes[0], 10);
-    const mes = parseInt(partes[1], 10) - 1; // Meses en JS van de 0-11
+    const mes = parseInt(partes[1], 10) - 1;
     const año = parseInt(partes[2], 10);
 
     return new Date(año, mes, dia);
@@ -183,64 +284,6 @@ function formatearHora(hora) {
     } else {
         return `${horaNum - 12}:${m} PM`;
     }
-}
-
-// ========================================
-// VALIDAR FECHA
-// ========================================
-function validarFecha(e) {
-    const fechaStr = e.target.value;
-
-    // Validar formato DD/MM/AAAA
-    const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    const match = fechaStr.match(regex);
-
-    if (!match) {
-        mostrarMensaje('Formato de fecha inválido. Use DD/MM/AAAA', 'error');
-        e.target.value = '';
-        return false;
-    }
-
-    const dia = parseInt(match[1], 10);
-    const mes = parseInt(match[2], 10);
-    const año = parseInt(match[3], 10);
-
-    // Validar rangos
-    if (mes < 1 || mes > 12) {
-        mostrarMensaje('Mes inválido (debe ser entre 01 y 12)', 'error');
-        e.target.value = '';
-        return false;
-    }
-
-    if (dia < 1 || dia > 31) {
-        mostrarMensaje('Día inválido (debe ser entre 01 y 31)', 'error');
-        e.target.value = '';
-        return false;
-    }
-
-    // Crear fecha y validar
-    const fechaSeleccionada = new Date(año, mes - 1, dia);
-
-    // Verificar que la fecha sea válida (por ejemplo, 31/02 no es válido)
-    if (fechaSeleccionada.getDate() !== dia ||
-        fechaSeleccionada.getMonth() !== (mes - 1) ||
-        fechaSeleccionada.getFullYear() !== año) {
-        mostrarMensaje('Fecha inválida', 'error');
-        e.target.value = '';
-        return false;
-    }
-
-    // Verificar que no sea una fecha pasada
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    if (fechaSeleccionada < hoy) {
-        mostrarMensaje('No puedes seleccionar una fecha pasada', 'error');
-        e.target.value = '';
-        return false;
-    }
-
-    return true;
 }
 
 // ========================================
@@ -290,6 +333,7 @@ async function manejarEnvioFormulario(e) {
     const formData = {
         nombre: document.getElementById('nombre').value.trim(),
         whatsapp: document.getElementById('whatsapp').value.trim(),
+        carrera: document.getElementById('carrera').value,
         fecha: document.getElementById('fecha').value,
         hora: document.getElementById('hora').value,
         comentarios: document.getElementById('comentarios').value.trim()
@@ -321,10 +365,13 @@ async function manejarEnvioFormulario(e) {
 
         if (citaGuardada) {
             mostrarMensaje(
-                `¡Cita reservada exitosamente! Te contactaremos al ${formData.whatsapp}`,
+                `¡Cita reservada exitosamente! Recibirás un WhatsApp de confirmación al ${formData.whatsapp} y un recordatorio 30 minutos antes.`,
                 'exito'
             );
             document.getElementById('form-cita').reset();
+            fechaSeleccionada = null;
+            document.getElementById('fecha-seleccionada').innerHTML = '';
+            renderizarCalendario();
         } else {
             // Verificar si el horario quedó ocupado
             const horarioOcupado = horariosOcupados.some(cita =>
@@ -364,11 +411,12 @@ async function manejarEnvioFormulario(e) {
 function validarFormulario() {
     const nombre = document.getElementById('nombre').value.trim();
     const whatsapp = document.getElementById('whatsapp').value.trim();
+    const carrera = document.getElementById('carrera').value;
     const fecha = document.getElementById('fecha').value;
     const hora = document.getElementById('hora').value;
 
     // Validar campos obligatorios
-    if (!nombre || !whatsapp || !fecha || !hora) {
+    if (!nombre || !whatsapp || !carrera || !fecha || !hora) {
         mostrarMensaje('Por favor, completa todos los campos obligatorios', 'error');
         return false;
     }
@@ -379,21 +427,13 @@ function validarFormulario() {
         return false;
     }
 
-    // Validar formato de fecha
-    const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    const match = fecha.match(regex);
-
-    if (!match) {
-        mostrarMensaje('Formato de fecha inválido. Use DD/MM/AAAA', 'error');
+    // Validar fecha seleccionada
+    if (!fechaSeleccionada) {
+        mostrarMensaje('Por favor, selecciona una fecha en el calendario', 'error');
         return false;
     }
 
-    const dia = parseInt(match[1], 10);
-    const mes = parseInt(match[2], 10);
-    const año = parseInt(match[3], 10);
-
-    // Validar fecha
-    const fechaSeleccionada = new Date(año, mes - 1, dia);
+    // Validar que la fecha no sea pasada
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
@@ -427,8 +467,8 @@ function mostrarMensaje(texto, tipo) {
     // Scroll al mensaje
     mensajeDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    // Ocultar después de 5 segundos
+    // Ocultar después de 7 segundos
     setTimeout(() => {
         mensajeDiv.classList.remove('show');
-    }, 5000);
+    }, 7000);
 }

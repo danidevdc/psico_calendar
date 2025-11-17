@@ -1,18 +1,25 @@
 // ========================================
-// GOOGLE APPS SCRIPT - BACKEND
+// GOOGLE APPS SCRIPT - BACKEND CON WHATSAPP
 // ========================================
-// Este código debe copiarse en Google Apps Script
-// y desplegarse como Web App
 
 // ========================================
 // CONFIGURACIÓN
 // ========================================
 const NOMBRE_HOJA = 'Citas';
 
+// CONFIGURACIÓN DE WHATSAPP - CallMeBot (GRATIS)
+// Obtén tu API Key en: https://www.callmebot.com/blog/free-api-whatsapp-messages/
+const WHATSAPP_API_KEY = 'TU_API_KEY_AQUI'; // Reemplazar con tu API Key
+const USAR_CALLMEBOT = true; // true = CallMeBot (gratis), false = Twilio (pago)
+
+// CONFIGURACIÓN ALTERNATIVA - Twilio (MÁS PROFESIONAL)
+const TWILIO_ACCOUNT_SID = 'TU_ACCOUNT_SID';
+const TWILIO_AUTH_TOKEN = 'TU_AUTH_TOKEN';
+const TWILIO_WHATSAPP_FROM = 'whatsapp:+14155238886'; // Número de Twilio
+
 // ========================================
 // FUNCIÓN PRINCIPAL - doGet
 // ========================================
-// Maneja las peticiones GET (obtener citas)
 function doGet(e) {
   try {
     const action = e.parameter.action;
@@ -41,13 +48,10 @@ function doGet(e) {
 // ========================================
 // FUNCIÓN PRINCIPAL - doPost
 // ========================================
-// Maneja las peticiones POST (crear nueva cita)
 function doPost(e) {
   try {
-    // Parsear los datos recibidos
     const datos = JSON.parse(e.postData.contents);
 
-    // Validar datos
     if (!validarDatos(datos)) {
       return ContentService
         .createTextOutput(JSON.stringify({
@@ -57,7 +61,6 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Verificar si el horario está ocupado
     if (horarioOcupado(datos.fecha, datos.hora)) {
       return ContentService
         .createTextOutput(JSON.stringify({
@@ -68,7 +71,13 @@ function doPost(e) {
     }
 
     // Guardar la cita
-    guardarCita(datos);
+    const fila = guardarCita(datos);
+
+    // Enviar confirmación por WhatsApp
+    enviarWhatsAppConfirmacion(datos);
+
+    // Programar recordatorio 30 minutos antes
+    programarRecordatorio(datos, fila);
 
     return ContentService
       .createTextOutput(JSON.stringify({
@@ -78,6 +87,7 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
+    Logger.log('Error en doPost: ' + error.toString());
     return ContentService
       .createTextOutput(JSON.stringify({
         status: 'error',
@@ -94,14 +104,12 @@ function obtenerCitas() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let hoja = ss.getSheetByName(NOMBRE_HOJA);
 
-  // Si la hoja no existe, crearla
   if (!hoja) {
     hoja = crearHojaCitas(ss);
   }
 
   const datos = hoja.getDataRange().getValues();
 
-  // Si solo existe el encabezado o está vacía
   if (datos.length <= 1) {
     return ContentService
       .createTextOutput(JSON.stringify({
@@ -111,16 +119,16 @@ function obtenerCitas() {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Convertir datos a objetos
   const citas = [];
   for (let i = 1; i < datos.length; i++) {
     citas.push({
       timestamp: datos[i][0],
       nombre: datos[i][1],
       whatsapp: datos[i][2],
-      fecha: datos[i][3],
-      hora: datos[i][4],
-      comentarios: datos[i][5]
+      carrera: datos[i][3],
+      fecha: datos[i][4],
+      hora: datos[i][5],
+      comentarios: datos[i][6]
     });
   }
 
@@ -138,6 +146,7 @@ function obtenerCitas() {
 function validarDatos(datos) {
   return datos.nombre &&
          datos.whatsapp &&
+         datos.carrera &&
          datos.fecha &&
          datos.hora;
 }
@@ -149,24 +158,19 @@ function horarioOcupado(fecha, hora) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let hoja = ss.getSheetByName(NOMBRE_HOJA);
 
-  // Si la hoja no existe, el horario está libre
   if (!hoja) {
     return false;
   }
 
   const datos = hoja.getDataRange().getValues();
 
-  // Buscar en todas las filas (excepto encabezado)
   for (let i = 1; i < datos.length; i++) {
-    const fechaExistente = datos[i][3];
-    const horaExistente = datos[i][4];
-
-    if (fechaExistente === fecha && horaExistente === hora) {
-      return true; // Horario ocupado
+    if (datos[i][4] === fecha && datos[i][5] === hora) {
+      return true;
     }
   }
 
-  return false; // Horario libre
+  return false;
 }
 
 // ========================================
@@ -176,27 +180,25 @@ function guardarCita(datos) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let hoja = ss.getSheetByName(NOMBRE_HOJA);
 
-  // Si la hoja no existe, crearla
   if (!hoja) {
     hoja = crearHojaCitas(ss);
   }
 
-  // Preparar fila de datos
   const timestamp = new Date();
   const fila = [
     timestamp,
     datos.nombre,
     datos.whatsapp,
+    datos.carrera,
     datos.fecha,
     datos.hora,
     datos.comentarios || ''
   ];
 
-  // Agregar fila al final
   hoja.appendRow(fila);
 
-  // Opcional: Enviar confirmación por email
-  // enviarEmailConfirmacion(datos);
+  // Retornar número de fila para programar recordatorio
+  return hoja.getLastRow();
 }
 
 // ========================================
@@ -205,11 +207,11 @@ function guardarCita(datos) {
 function crearHojaCitas(ss) {
   const hoja = ss.insertSheet(NOMBRE_HOJA);
 
-  // Crear encabezados
   const encabezados = [
     'Timestamp',
     'Nombre',
     'WhatsApp',
+    'Carrera',
     'Fecha',
     'Hora',
     'Comentarios'
@@ -217,65 +219,231 @@ function crearHojaCitas(ss) {
 
   hoja.appendRow(encabezados);
 
-  // Formatear encabezados
   const rangoEncabezado = hoja.getRange(1, 1, 1, encabezados.length);
   rangoEncabezado.setFontWeight('bold');
   rangoEncabezado.setBackground('#667eea');
   rangoEncabezado.setFontColor('#ffffff');
 
-  // Ajustar ancho de columnas
-  hoja.setColumnWidth(1, 150); // Timestamp
-  hoja.setColumnWidth(2, 200); // Nombre
-  hoja.setColumnWidth(3, 100); // WhatsApp
-  hoja.setColumnWidth(4, 120); // Fecha
-  hoja.setColumnWidth(5, 80);  // Hora
-  hoja.setColumnWidth(6, 300); // Comentarios
+  hoja.setColumnWidth(1, 150);
+  hoja.setColumnWidth(2, 200);
+  hoja.setColumnWidth(3, 100);
+  hoja.setColumnWidth(4, 120);
+  hoja.setColumnWidth(5, 120);
+  hoja.setColumnWidth(6, 80);
+  hoja.setColumnWidth(7, 300);
 
-  // Congelar primera fila
   hoja.setFrozenRows(1);
 
   return hoja;
 }
 
 // ========================================
-// FUNCIÓN OPCIONAL: ENVIAR EMAIL
+// ENVIAR WHATSAPP DE CONFIRMACIÓN
 // ========================================
-// Descomenta y personaliza si quieres enviar confirmaciones por email
-/*
-function enviarEmailConfirmacion(datos) {
-  const asunto = 'Confirmación de Cita';
-  const destinatario = 'tu-email@ejemplo.com'; // Tu email
+function enviarWhatsAppConfirmacion(datos) {
+  const mensaje = `✅ *Cita Confirmada*
 
-  const mensaje = `
-    Nueva cita reservada:
+Hola ${datos.nombre},
 
-    Nombre: ${datos.nombre}
-    WhatsApp: ${datos.whatsapp}
-    Fecha: ${datos.fecha}
-    Hora: ${datos.hora}
-    Comentarios: ${datos.comentarios || 'Sin comentarios'}
+Tu cita ha sido reservada exitosamente:
 
-    ---
-    Sistema de Reservas de Citas
-  `;
+📅 Fecha: ${datos.fecha}
+🕐 Hora: ${datos.hora}
+🎓 Carrera: ${datos.carrera}
 
-  MailApp.sendEmail(destinatario, asunto, mensaje);
+Recibirás un recordatorio 30 minutos antes de tu cita.
+
+¡Te esperamos!`;
+
+  enviarWhatsApp(datos.whatsapp, mensaje);
 }
-*/
 
 // ========================================
-// FUNCIÓN DE PRUEBA
+// ENVIAR WHATSAPP - MÉTODO PRINCIPAL
 // ========================================
-// Ejecuta esta función para verificar que todo funciona
+function enviarWhatsApp(numeroWhatsApp, mensaje) {
+  try {
+    if (USAR_CALLMEBOT) {
+      enviarWhatsAppCallMeBot(numeroWhatsApp, mensaje);
+    } else {
+      enviarWhatsAppTwilio(numeroWhatsApp, mensaje);
+    }
+  } catch (error) {
+    Logger.log('Error al enviar WhatsApp: ' + error.toString());
+  }
+}
+
+// ========================================
+// ENVIAR WHATSAPP CON CALLMEBOT (GRATIS)
+// ========================================
+function enviarWhatsAppCallMeBot(numeroWhatsApp, mensaje) {
+  // CallMeBot requiere: +591 (código país Bolivia) + número sin espacios
+  const numerCompleto = `+591${numeroWhatsApp}`;
+  const mensajeCodificado = encodeURIComponent(mensaje);
+
+  const url = `https://api.callmebot.com/whatsapp.php?phone=${numerCompleto}&text=${mensajeCodificado}&apikey=${WHATSAPP_API_KEY}`;
+
+  const opciones = {
+    method: 'get',
+    muteHttpExceptions: true
+  };
+
+  const respuesta = UrlFetchApp.fetch(url, opciones);
+  Logger.log('Respuesta CallMeBot: ' + respuesta.getContentText());
+}
+
+// ========================================
+// ENVIAR WHATSAPP CON TWILIO (PROFESIONAL)
+// ========================================
+function enviarWhatsAppTwilio(numeroWhatsApp, mensaje) {
+  const numeroCompleto = `whatsapp:+591${numeroWhatsApp}`;
+
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+
+  const payload = {
+    From: TWILIO_WHATSAPP_FROM,
+    To: numeroCompleto,
+    Body: mensaje
+  };
+
+  const opciones = {
+    method: 'post',
+    headers: {
+      'Authorization': 'Basic ' + Utilities.base64Encode(TWILIO_ACCOUNT_SID + ':' + TWILIO_AUTH_TOKEN)
+    },
+    payload: payload,
+    muteHttpExceptions: true
+  };
+
+  const respuesta = UrlFetchApp.fetch(url, opciones);
+  Logger.log('Respuesta Twilio: ' + respuesta.getContentText());
+}
+
+// ========================================
+// PROGRAMAR RECORDATORIO
+// ========================================
+function programarRecordatorio(datos, fila) {
+  try {
+    // Parsear fecha y hora
+    const partesFecha = datos.fecha.split('/');
+    const dia = parseInt(partesFecha[0], 10);
+    const mes = parseInt(partesFecha[1], 10) - 1; // Meses en JS: 0-11
+    const anio = parseInt(partesFecha[2], 10);
+
+    const partesHora = datos.hora.split(':');
+    const hora = parseInt(partesHora[0], 10);
+    const minutos = parseInt(partesHora[1], 10);
+
+    // Crear fecha/hora de la cita
+    const fechaCita = new Date(anio, mes, dia, hora, minutos);
+
+    // Calcular 30 minutos antes
+    const fechaRecordatorio = new Date(fechaCita.getTime() - (30 * 60 * 1000));
+
+    // Verificar que sea en el futuro
+    if (fechaRecordatorio > new Date()) {
+      // Crear trigger
+      ScriptApp.newTrigger('enviarRecordatorioAutomatico')
+        .timeBased()
+        .at(fechaRecordatorio)
+        .create();
+
+      // Guardar info del recordatorio en propiedades
+      const propiedades = PropertiesService.getScriptProperties();
+      const key = `recordatorio_${fechaRecordatorio.getTime()}`;
+
+      propiedades.setProperty(key, JSON.stringify({
+        nombre: datos.nombre,
+        whatsapp: datos.whatsapp,
+        fecha: datos.fecha,
+        hora: datos.hora,
+        fila: fila
+      }));
+
+      Logger.log('Recordatorio programado para: ' + fechaRecordatorio);
+    }
+  } catch (error) {
+    Logger.log('Error al programar recordatorio: ' + error.toString());
+  }
+}
+
+// ========================================
+// ENVIAR RECORDATORIO AUTOMÁTICO
+// ========================================
+function enviarRecordatorioAutomatico(e) {
+  try {
+    const propiedades = PropertiesService.getScriptProperties();
+    const ahora = new Date().getTime();
+
+    // Buscar recordatorios pendientes (margen de 5 minutos)
+    const allKeys = propiedades.getKeys();
+
+    allKeys.forEach(key => {
+      if (key.startsWith('recordatorio_')) {
+        const tiempo = parseInt(key.replace('recordatorio_', ''));
+
+        // Si es el momento correcto (margen de 5 minutos)
+        if (Math.abs(ahora - tiempo) < 5 * 60 * 1000) {
+          const datosStr = propiedades.getProperty(key);
+          const datos = JSON.parse(datosStr);
+
+          const mensaje = `⏰ *Recordatorio de Cita*
+
+Hola ${datos.nombre},
+
+Tienes una cita en 30 minutos:
+
+📅 Fecha: ${datos.fecha}
+🕐 Hora: ${datos.hora}
+
+¡No olvides asistir!`;
+
+          enviarWhatsApp(datos.whatsapp, mensaje);
+
+          // Eliminar recordatorio ya enviado
+          propiedades.deleteProperty(key);
+
+          Logger.log('Recordatorio enviado a: ' + datos.whatsapp);
+        }
+      }
+    });
+  } catch (error) {
+    Logger.log('Error en recordatorio automático: ' + error.toString());
+  }
+}
+
+// ========================================
+// FUNCIÓN DE PRUEBA - ENVIAR WHATSAPP
+// ========================================
+function pruebaEnviarWhatsApp() {
+  const numeroTest = '71234567'; // Tu número de prueba
+
+  const mensaje = `🧪 *Mensaje de Prueba*
+
+Este es un mensaje de prueba del sistema de citas.
+
+Si recibes este mensaje, ¡la configuración es correcta!`;
+
+  enviarWhatsApp(numeroTest, mensaje);
+
+  Logger.log('Mensaje de prueba enviado');
+}
+
+// ========================================
+// FUNCIÓN DE PRUEBA - CREAR CITA
+// ========================================
 function pruebaCrearCita() {
   const datosTest = {
     nombre: 'Juan Pérez',
     whatsapp: '71234567',
+    carrera: 'Psicología',
     fecha: '20/11/2024',
     hora: '10:00',
     comentarios: 'Prueba del sistema'
   };
 
-  guardarCita(datosTest);
-  Logger.log('Cita de prueba creada correctamente');
+  const fila = guardarCita(datosTest);
+  enviarWhatsAppConfirmacion(datosTest);
+
+  Logger.log('Cita de prueba creada en fila: ' + fila);
 }
