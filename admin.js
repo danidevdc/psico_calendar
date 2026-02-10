@@ -14,6 +14,14 @@ const ADMIN_PASSWORD = 'psico2025'; // ⚠️ CAMBIAR ESTA CONTRASEÑA
 // ========================================
 let todasLasCitas = [];
 let citasFiltradas = [];
+let diasFeriados = [];
+
+// Cargar días feriados del localStorage
+function cargarDiasFeriados() {
+    const feriados = localStorage.getItem('diasFeriados');
+    diasFeriados = feriados ? JSON.parse(feriados) : [];
+    renderizarDiasFeriados();
+}
 
 // ========================================
 // INICIALIZACIÓN
@@ -21,6 +29,11 @@ let citasFiltradas = [];
 document.addEventListener('DOMContentLoaded', function() {
     verificarSesion();
     configurarEventos();
+    
+    // Inicializar iconos de Lucide
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 
 // ========================================
@@ -48,6 +61,7 @@ function mostrarLogin() {
 function mostrarPanel() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
+    cargarDiasFeriados();
 }
 
 // ========================================
@@ -62,6 +76,13 @@ function configurarEventos() {
     document.getElementById('btn-refresh').addEventListener('click', cargarCitas);
     document.getElementById('btn-export').addEventListener('click', exportarCSV);
     document.getElementById('btn-clear-filters').addEventListener('click', limpiarFiltros);
+
+    // Modal Crear Cita
+    document.getElementById('btn-nueva-cita').addEventListener('click', abrirModalCita);
+    document.getElementById('form-crear-cita').addEventListener('submit', guardarCitaAdmin);
+
+    // Feriados
+    document.getElementById('btn-agregar-feriado').addEventListener('click', agregarDiaFeriado);
 
     // Filtros
     document.getElementById('filter-fecha').addEventListener('input', aplicarFiltros);
@@ -483,4 +504,177 @@ function mostrarMensaje(texto, tipo) {
     setTimeout(() => {
         mensajeDiv.classList.remove('show');
     }, 5000);
+}
+// ========================================
+// GESTIÓN DE DÍAS FERIADOS
+// ========================================
+
+function agregarDiaFeriado() {
+    const fechaInput = document.getElementById('fecha-feriado');
+    const nombreInput = document.getElementById('nombre-feriado');
+
+    const fecha = fechaInput.value;
+    const nombre = nombreInput.value.trim();
+
+    if (!fecha || !nombre) {
+        mostrarMensaje('⚠️ Por favor completa fecha y nombre del feriado', 'error');
+        return;
+    }
+
+    // Verificar si ya existe
+    if (diasFeriados.some(f => f.fecha === fecha)) {
+        mostrarMensaje('⚠️ Esta fecha ya está configurada como feriado', 'error');
+        return;
+    }
+
+    // Agregar feriado
+    diasFeriados.push({
+        fecha: fecha,
+        nombre: nombre
+    });
+
+    // Guardar en localStorage
+    localStorage.setItem('diasFeriados', JSON.stringify(diasFeriados));
+
+    // Actualizar script.js en el navegador del usuario
+    // (necesitará actualizar la página para ver cambios)
+    
+    // Limpiar inputs
+    fechaInput.value = '';
+    nombreInput.value = '';
+
+    // Renderizar
+    renderizarDiasFeriados();
+    mostrarMensaje('✅ Día feriado agregado correctamente', 'success');
+
+    // Recargar página en otros dispositivos (si es necesario)
+    console.log('Feriados actualizados:', diasFeriados);
+}
+
+function eliminarDiaFeriado(fecha) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este día feriado?')) {
+        return;
+    }
+
+    diasFeriados = diasFeriados.filter(f => f.fecha !== fecha);
+    localStorage.setItem('diasFeriados', JSON.stringify(diasFeriados));
+
+    renderizarDiasFeriados();
+    mostrarMensaje('✅ Día feriado eliminado correctamente', 'success');
+}
+
+function renderizarDiasFeriados() {
+    const container = document.getElementById('lista-feriados');
+
+    if (diasFeriados.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No hay días feriados configurados aún</p>';
+        return;
+    }
+
+    // Ordenar por fecha
+    const feriadosordenados = [...diasFeriados].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+    container.innerHTML = feriadosordenados.map(feriado => {
+        const fecha = new Date(feriado.fecha);
+        const fechaFormato = fecha.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        return `
+            <div class="feriado-card">
+                <div class="feriado-info">
+                    <div class="feriado-fecha">${fechaFormato}</div>
+                    <div class="feriado-nombre">${feriado.nombre}</div>
+                </div>
+                <button class="btn-eliminar-feriado" onclick="eliminarDiaFeriado('${feriado.fecha}')">
+                    ❌ Eliminar
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+// ========================================
+// MODAL CREAR CITA DESDE ADMIN
+// ========================================
+
+function abrirModalCita() {
+    document.getElementById('modal-crear-cita').style.display = 'flex';
+    
+    // Establecer fecha mínima como hoy
+    const hoy = new Date();
+    const fechaMinima = hoy.toISOString().split('T')[0];
+    document.getElementById('modal-fecha').min = fechaMinima;
+
+    // Establecer fecha máxima como 12 de diciembre 2025
+    document.getElementById('modal-fecha').max = '2025-12-12';
+}
+
+function cerrarModalCita() {
+    document.getElementById('modal-crear-cita').style.display = 'none';
+    document.getElementById('form-crear-cita').reset();
+}
+
+async function guardarCitaAdmin(e) {
+    e.preventDefault();
+
+    const btnGuardar = document.querySelector('.btn-guardar-cita');
+    const btnText = btnGuardar.querySelector('.btn-text');
+    const btnLoader = btnGuardar.querySelector('.btn-loader');
+
+    btnGuardar.disabled = true;
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'inline-block';
+
+    const datosFormulario = {
+        nombre: document.getElementById('modal-nombre').value.trim(),
+        whatsapp: document.getElementById('modal-whatsapp').value.trim(),
+        carrera: document.getElementById('modal-carrera').value,
+        fecha: document.getElementById('modal-fecha').value,
+        hora: document.getElementById('modal-hora').value,
+        comentarios: document.getElementById('modal-comentarios').value.trim()
+    };
+
+    // Validar datos
+    if (!datosFormulario.nombre || !datosFormulario.whatsapp || !datosFormulario.carrera || 
+        !datosFormulario.fecha || !datosFormulario.hora) {
+        mostrarMensaje('⚠️ Por favor completa todos los campos requeridos', 'error');
+        btnGuardar.disabled = false;
+        btnText.style.display = 'inline-block';
+        btnLoader.style.display = 'none';
+        return;
+    }
+
+    try {
+        // Enviar cita a Google Apps Script
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(datosFormulario)
+        });
+
+        // Esperar a que se procese
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Recargar citas
+        await cargarCitas();
+
+        mostrarMensaje(`✅ Cita creada para ${datosFormulario.nombre}`, 'success');
+
+        // Cerrar modal
+        cerrarModalCita();
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('❌ Error al crear la cita. Verifica la conexión.', 'error');
+    } finally {
+        btnGuardar.disabled = false;
+        btnText.style.display = 'inline-block';
+        btnLoader.style.display = 'none';
+    }
 }

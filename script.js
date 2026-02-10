@@ -11,13 +11,36 @@ let mesActual = new Date().getMonth();
 let anioActual = new Date().getFullYear();
 let fechaSeleccionada = null;
 
+// Días feriados: Array de fechas en formato YYYY-MM-DD que se pueden configurar desde admin
+let diasFeriados = [
+    // Ejemplos (puedes personalizar):
+    // '2025-01-01', // Año Nuevo
+    // '2025-02-20', // Carnaval
+    // '2025-03-21', // Equinoccio
+];
+
 // ========================================
 // INICIALIZACIÓN
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Cargar días feriados desde localStorage
+    const feriados = localStorage.getItem('diasFeriados');
+    if (feriados) {
+        try {
+            diasFeriados = JSON.parse(feriados);
+        } catch (e) {
+            console.error('Error al cargar feriados:', e);
+        }
+    }
+
     cargarHorariosOcupados();
     configurarEventos();
     renderizarCalendario();
+    
+    // Inicializar iconos de Lucide
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 
 // ========================================
@@ -107,21 +130,40 @@ function renderizarCalendario() {
 
         const diaSemana = fechaDia.getDay(); // 0 = Domingo, 6 = Sábado
 
-        // Deshabilitar día si:
-        // 1. Es día pasado
-        // 2. Es sábado (6) o domingo (0)
-        // 3. Es después del 12 de diciembre 2024
+        // Convertir fecha a string para comparación de feriados
+        const fechaStr = fechaDia.toISOString().split('T')[0]; // YYYY-MM-DD
+        const esFeriado = diasFeriados.includes(fechaStr);
+
+        // Verificar tipo de día
         const esPasado = fechaDia < hoy;
         const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
         const despuesDeLimite = fechaDia > fechaLimite;
 
-        if (esPasado || esFinDeSemana || despuesDeLimite) {
+        // Marcar día de hoy primero
+        const esHoy = fechaDia.getTime() === hoy.getTime();
+        if (esHoy) {
+            diaElemento.classList.add('dia-hoy');
+        }
+
+        // LÓGICA CORRECTA:
+        if (esPasado) {
+            // DÍAS PASADOS - siempre grises, no clickeables
             diaElemento.classList.add('dia-pasado');
-            if (esFinDeSemana) {
-                diaElemento.classList.add('fin-de-semana');
+        } else if (esFeriado) {
+            // FERIADOS - dorados, no clickeables
+            diaElemento.classList.add('dia-feriado');
+            if (esHoy) {
+                diaElemento.classList.add('hoy');
             }
+        } else if (despuesDeLimite) {
+            // DESPUÉS DEL LÍMITE DE RESERVA - grises, no clickeables
+            diaElemento.classList.add('dia-pasado');
+        } else if (esFinDeSemana) {
+            // SÁBADOS Y DOMINGOS FUTUROS - azules, NO clickeables
+            diaElemento.classList.add('fin-de-semana');
         } else {
-            // Hacer clic solo si es día hábil disponible
+            // DÍAS NORMALES DISPONIBLES (Lunes-Viernes, futuros, no feriado) - CLICKEABLES
+            diaElemento.classList.add('disponible');
             diaElemento.addEventListener('click', () => seleccionarFecha(dia));
 
             // Marcar día seleccionado
@@ -131,11 +173,6 @@ function renderizarCalendario() {
                 fechaSeleccionada.getFullYear() === anioActual) {
                 diaElemento.classList.add('dia-seleccionado');
             }
-        }
-
-        // Marcar día de hoy
-        if (fechaDia.getTime() === hoy.getTime()) {
-            diaElemento.classList.add('dia-hoy');
         }
 
         diasGrid.appendChild(diaElemento);

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Sistema de Citas</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -51,6 +52,7 @@
             <div class="header-content">
                 <h1>📊 Panel de Administración</h1>
                 <div class="header-actions">
+                    <button id="btn-nueva-cita" class="btn-primary-header">➕ Nueva Cita</button>
                     <button id="btn-refresh" class="btn-secondary">🔄 Actualizar</button>
                     <button id="btn-logout" class="btn-secondary">🚪 Cerrar Sesión</button>
                 </div>
@@ -92,6 +94,35 @@
                         <div class="stat-label">Citas Hoy</div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Gestión de Días Feriados -->
+        <section class="feriados-section">
+            <h2>📅 Gestión de Días Feriados</h2>
+            
+            <div class="feriados-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha-feriado">Fecha del Feriado:</label>
+                        <input type="date" id="fecha-feriado" min="2025-01-01" max="2025-12-31">
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre-feriado">Nombre del Feriado:</label>
+                        <input type="text" id="nombre-feriado" placeholder="Ej: Carnaval, Navidad...">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button id="btn-agregar-feriado" class="btn-primary">
+                            ➕ Agregar Feriado
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="lista-feriados" class="feriados-list">
+                <p style="text-align: center; color: #999; padding: 20px;">
+                    No hay días feriados configurados aún
+                </p>
             </div>
         </section>
 
@@ -140,6 +171,93 @@
 
         <!-- Mensaje de confirmación -->
         <div id="mensaje-admin" class="mensaje-admin"></div>
+    </div>
+
+    <!-- MODAL CREAR CITA -->
+    <div id="modal-crear-cita" class="modal-overlay" style="display: none;">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2>➕ Crear Nueva Cita</h2>
+                <button type="button" class="btn-cerrar-modal" onclick="cerrarModalCita()">✕</button>
+            </div>
+
+            <form id="form-crear-cita" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modal-nombre">Nombre Completo *</label>
+                        <input type="text" id="modal-nombre" name="nombre" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal-whatsapp">WhatsApp *</label>
+                        <input type="tel" id="modal-whatsapp" name="whatsapp" 
+                               placeholder="71234567" pattern="[0-9]{8}" maxlength="8" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modal-carrera">Carrera *</label>
+                        <select id="modal-carrera" name="carrera" required>
+                            <option value="">Seleccione carrera</option>
+                            <option value="Psicología">Psicología</option>
+                            <option value="Medicina">Medicina</option>
+                            <option value="Enfermería">Enfermería</option>
+                            <option value="Odontología">Odontología</option>
+                            <option value="Derecho">Derecho</option>
+                            <option value="Ingeniería">Ingeniería</option>
+                            <option value="Administración">Administración</option>
+                            <option value="Contaduría">Contaduría</option>
+                            <option value="Economía">Economía</option>
+                            <option value="Arquitectura">Arquitectura</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal-fecha">Fecha *</label>
+                        <input type="date" id="modal-fecha" name="fecha" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modal-hora">Hora *</label>
+                        <select id="modal-hora" name="hora" required>
+                            <option value="">Seleccione hora</option>
+                            <optgroup label="Turno Mañana">
+                                <option value="10:15">10:15 AM</option>
+                                <option value="11:10">11:10 AM</option>
+                                <option value="12:05">12:05 PM</option>
+                            </optgroup>
+                            <optgroup label="Turno Tarde">
+                                <option value="14:00">02:00 PM</option>
+                                <option value="14:55">02:55 PM</option>
+                                <option value="15:50">03:50 PM</option>
+                                <option value="16:45">04:45 PM</option>
+                                <option value="17:40">05:40 PM</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal-comentarios">Comentarios</label>
+                        <textarea id="modal-comentarios" name="comentarios" 
+                                  rows="2" placeholder="Notas adicionales..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-guardar-cita">
+                        <span class="btn-text">💾 Guardar Cita</span>
+                        <span class="btn-loader" style="display: none;">⏳</span>
+                    </button>
+                    <button type="button" class="btn-cancelar-modal" onclick="cerrarModalCita()">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="admin.js"></script>
